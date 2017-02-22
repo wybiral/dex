@@ -1,0 +1,22 @@
+body {
+    padding-left: 150px;
+}
+
+input {
+    font: 16px arial, sans-serif;
+    padding: 5px;
+}
+
+#stats {
+    margin: 1em 0;
+}
+
+.result > .line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.result + .result {
+    margin-top: 1em;
+}

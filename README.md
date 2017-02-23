@@ -1,5 +1,7 @@
 # dex
-IoT scanner and search engine
+dex will scan random IPv4 adddresses for exposed devices and create a growing database of the results. A basic regex search engine can be run to help find specific devices.
+
+Useful for sampling vulnerable devices on the internet, like having your own small version of [Shodan](https://www.shodan.io/).
 
 ## Quickstart video:
 

@@ -1,13 +1,12 @@
 try:
+    from http.client import HTTPResponse, HTTPConnection
+except:
+    from httplib import HTTPResponse, HTTPConnection
+try:
     from Queue import Queue
 except ImportError:
     from queue import Queue
 from random import randrange as rand
-try:
-    from requests import get
-except ImportError:
-    print('requests module required:\npip install requests')
-    exit()
 from threading import Thread, active_count
 from time import sleep
 from database import get_database
@@ -15,7 +14,7 @@ from database import get_database
 
 class Scanner:
 
-    def __init__(self, threadcount=100):
+    def __init__(self, threadcount=500):
         self.threadcount = threadcount
 
     def run(self):
@@ -50,10 +49,13 @@ class Scanner:
                 continue
 
     def _work(self):
-        host = '.'.join(str(rand(256)) for i in range(4))
-        req = get('http://' + host, timeout=1)
+        host = '%s.%s.%s.%s' % (rand(256), rand(256), rand(256), rand(256))
+        con = HTTPConnection(host, 80, timeout=1.0)
+        con.request('GET', '/')
+        res = con.getresponse()
+        headers = res.getheaders()
         lines = []
-        for key, value in req.headers.items():
+        for key, value in headers:
             if len(key) < 256 and len(value) < 256:
                 lines.append('{}: {}'.format(key, value))
         return (host, lines)

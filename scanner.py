@@ -1,12 +1,9 @@
 try:
-    from http.client import HTTPResponse, HTTPConnection
-except:
-    from httplib import HTTPResponse, HTTPConnection
-try:
     from Queue import Queue
 except ImportError:
     from queue import Queue
 from random import randrange as rand
+from socket import socket, AF_INET, SOCK_STREAM
 from threading import Thread, active_count
 from time import sleep
 from database import get_database
@@ -25,7 +22,7 @@ class Scanner:
 
     def block(self):
         while active_count() > 0:
-            sleep(0.5)
+            sleep(10)
 
     def _start_thread(self, fn, queue):
         thread = Thread(target=fn, args=(queue,))
@@ -50,14 +47,18 @@ class Scanner:
 
     def _work(self):
         host = '%s.%s.%s.%s' % (rand(256), rand(256), rand(256), rand(256))
-        con = HTTPConnection(host, 80, timeout=1.0)
-        con.request('GET', '/')
-        res = con.getresponse()
-        headers = res.getheaders()
-        lines = []
-        for key, value in headers:
-            if len(key) < 256 and len(value) < 256:
-                lines.append('{}: {}'.format(key, value))
+        s = socket(AF_INET, SOCK_STREAM)
+        s.settimeout(1.0)
+        s.connect((host, 80))
+        s.send(b'GET / HTTP/1.0\r\n\r\n')
+        buf = s.recv(1024 * 2)
+        parts = buf.split(b'\r\n\r\n', 1)
+        if len(parts) > 1:
+            raw = parts[0]
+            lines = parts[0].split(b'\r\n')
+            lines = [x.decode('utf-8', 'ignore') for x in lines]
+        else:
+            lines = []
         return (host, lines)
 
 

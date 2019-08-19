@@ -15,9 +15,9 @@
         <div id="stats">
             {{results|length}} hosts found
         </div>
-        {% for host, lines in results %}
+        {% for host, port, lines in results %}
         <div class="result">
-            <div><a href="http://{{host}}">{{host}}</a></div>
+            <div><a href="http://{{host}}:{{port}}">{{host}}:{{port}}</a></div>
             {% for line in lines %}
                 <div class="line">{{line}}</div>
             {% endfor %}

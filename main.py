@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 from database import get_database
 
 HOST = '127.0.0.1'
-PORT = 80
+PORT = 8666
 
 app = Flask(__name__, static_url_path='')
 

@@ -22,44 +22,63 @@ class SqliteDb(Database):
         db.create_function('REGEXP', 2, regexp)
         cursor = db.cursor()
         cursor.execute('''
-            create table if not exists Header (
+            create table if not exists Scan (
                 time real,
                 host text,
-                line text
-            )
+                port integer
+            );
         ''')
-        cursor.execute('create index if not exists idxHost on Header (host)')
+        cursor.execute('''
+            create table if not exists Header (
+                scan_id integer,
+                line text
+            );
+        ''')
         cursor.execute('create index if not exists idxLine on Header (line)')
+        cursor.execute('create index if not exists idxScan on Header (scan_id)')
         db.commit()
         self._db = db
 
-    def insert(self, host, lines):
+    def insert(self, host, port, lines):
         now = time.time()
         cursor = self._db.cursor()
+        cursor.execute('''
+            insert into Scan (time, host, port) values (?, ?, ?)
+        ''', (now, host, port))
+        scan_id = cursor.lastrowid
         values = []
         for line in lines:
-            values.append((now, host, line))
+            values.append((scan_id, line))
         cursor.executemany('''
-            insert into Header (time, host, line) values (?, ?, ?)
+            insert into Header (scan_id, line) values (?, ?)
         ''', values)
         self._db.commit()
 
     def search(self, query):
         cursor = self._db.cursor()
         cursor.execute('''
-            select distinct host from Header where line regexp ?
+            select Header.scan_id, Scan.host, Scan.port
+            from Header
+            join Scan on Scan.rowid = Header.scan_id
+            where line regexp ?
+            group by Header.scan_id
         ''', (query,))
         results = []
         for row in cursor:
-            host = row[0]
-            results.append((host, self.__get_lines(host)))
+            scan_id = row[0]
+            host = row[1]
+            port = row[2]
+            results.append((host, port, self.__get_lines(scan_id)))
         return results
 
-    def __get_lines(self, host):
+    def __get_lines(self, scan_id):
         cursor = self._db.cursor()
         cursor.execute('''
-            select line from Header where host = ? order by line
-        ''', (host,))
+            select line
+            from Header
+            where scan_id = ?
+            order by rowid
+        ''', (scan_id,))
         return [x[0] for x in cursor]
 
 def regexp(expr, text):
